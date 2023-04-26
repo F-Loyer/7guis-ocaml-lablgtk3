@@ -1,5 +1,0 @@
-lib: [
-  "_build/install/default/lib/essai/META"
-  "_build/install/default/lib/essai/dune-package"
-  "_build/install/default/lib/essai/opam"
-]
