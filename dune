@@ -1,0 +1,3 @@
+(executables
+ (names counter temperature flightbooker timer crud tree circledrawer)
+ (libraries lablgtk3 calendar))
