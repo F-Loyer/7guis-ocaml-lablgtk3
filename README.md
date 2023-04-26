@@ -1,4 +1,4 @@
-# 7GUIS implémenté en OCaml / LibGtk3
+# 7GUIS implemented in OCaml / LibGtk3
 
 The 5 first challenges are implemented with in OCaml with the library
 LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
