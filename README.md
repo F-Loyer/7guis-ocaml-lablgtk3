@@ -7,5 +7,5 @@ is used to for dates handling.
 The 6th challenge (Draw Circle) is not finished.
 
 The 7th challenge (Cells) won't be developped. Gtk doesn't provide a 
-real table widget. The listi\_view is closed to this widget, but doesn't
+real table widget. The list\_view is closed to this widget, but doesn't
 permit the selection of a unique cell.
