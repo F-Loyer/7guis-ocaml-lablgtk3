@@ -1,6 +1,7 @@
 # 7GUIS implemented in OCaml / LibGtk3
 
-The 6 first challenges are implemented with in OCaml with the library
+This project implements the 6 first tasks of the 7GUIs
+(https://eugenkiss.github.io/7guis/tasks) in OCaml with the library
 LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
 is used to for dates handling.
 
