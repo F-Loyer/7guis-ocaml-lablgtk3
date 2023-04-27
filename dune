@@ -1,3 +1,8 @@
+(menhir
+   (modules parser))
+(ocamllex lexer)
+
 (executables
- (names counter temperature flightbooker timer crud circledrawer)
+ (names counter temperature flightbooker timer crud circledrawer cells)
  (libraries lablgtk3 calendar))
+
