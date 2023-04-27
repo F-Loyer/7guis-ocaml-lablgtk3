@@ -5,7 +5,8 @@ This project implements the 6 first tasks of the 7GUIs
 LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
 is used to for dates handling.
 
-The 7th task (Cells) is currently developped.
+The 7th task (Cells) is in an early stage. (Float arithmetic, circular
+reference handling).
 
 The different task are compiled and executed with
 
