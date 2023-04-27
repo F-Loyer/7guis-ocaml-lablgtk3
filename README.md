@@ -6,7 +6,10 @@ LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
 is used to for dates handling.
 
 The 7th task (Cells) is in an early stage. (Float arithmetic, circular
-reference handling).
+reference handling). It is composed of multiple files. `cells.ml` the main
+program which supports the GUIs aspects, `expr.ml` an abstract
+spreadsheet. `parser.mly` the parser description (with menhir), `lexer.mll`
+the lexer description (with ocamllex).
 
 The different task are compiled and executed with
 
