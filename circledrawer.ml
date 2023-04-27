@@ -20,14 +20,11 @@ let drawing = GMisc.drawing_area ~packing:(table#attach ~left:0 ~right:2~top:1) 
 
 let draw widget cr =
   ignore widget;
-  begin
-    match !selected_circle with
-    | Some c ->
-        Cairo.set_source_rgb cr 0.5 0.5 0.5;
-        Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
-        Cairo.fill cr
-    | None -> ()
-  end;
+  Option.iter (fun c ->
+     Cairo.set_source_rgb cr 0.5 0.5 0.5;
+     Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
+     Cairo.fill cr
+  ) !selected_circle;
   Hashtbl.iter (fun _ c ->
      Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
      Cairo.set_source_rgb cr 0. 0. 0.;
