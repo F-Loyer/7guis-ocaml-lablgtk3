@@ -1,20 +1,13 @@
 let _ = GMain.init ()
 
-let list_of_circles = ref [50., 50., 20.;
-                         75., 50., 20.]
+type circle = { x:float; y: float; mutable r: float}
+type action = { undo: unit -> unit; redo: unit -> unit}
+
+let redo_list = ref []
+let undo_list = ref []
+
+let circles = Hashtbl.create 10
 let selected_circle = ref None
-(*
-type change = Create of float*float*float
-            | Change of float*float*float*float
-*)
-let change_diameter x y radius =
-  list_of_circles := List.map (function c ->
-    match c with 
-      | (x',y',_) when x=x' && y=y' -> (x,y,radius)
-      | _ -> c) !list_of_circles;
-  match !selected_circle with
-  | Some (x',y',_,d') when x=x' && y=y' -> selected_circle := Some (x,y,radius,d')
-  | _ -> ()
 
 let w = GWindow.window ~title:"Circle Drawer" ()
 let table = GPack.table ~row_spacings:4 ~col_spacings:4 ~rows:2 ~columns:2 ~homogeneous:false ~show:true ~packing:w#add ()
@@ -27,35 +20,77 @@ let drawing = GMisc.drawing_area ~packing:(table#attach ~left:0 ~right:2~top:1) 
 
 let draw widget cr =
   ignore widget;
-  (match !selected_circle with
-   | Some (x,y,r,_) ->
+  begin
+    match !selected_circle with
+    | Some c ->
         Cairo.set_source_rgb cr 0.5 0.5 0.5;
-        Cairo.arc cr x y ~r ~a1:0. ~a2:(2.*.Float.pi);
+        Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
         Cairo.fill cr
-   | None -> ());
-  (* Cairo.paint cr; *)
-    List.iter (function (x,y,r) ->
-     Cairo.arc cr x y ~r ~a1:0. ~a2:(2.*.Float.pi);
+    | None -> ()
+  end;
+  Hashtbl.iter (fun _ c ->
+     Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
      Cairo.set_source_rgb cr 0. 0. 0.;
      Cairo.stroke cr
-  ) !list_of_circles;
+  ) circles;
   true
-(* drawing area/GObj.widget_full..widget_signals/gtkobj_signals *)
-(* entry..connect/editable_signal/GObj.widget_signals
-   entry..event/event_ops/*)
+
+let _ = drawing#misc#connect#draw ~callback:(draw drawing)
+
+let _ = button_undo#connect#clicked ~callback:(fun _ ->
+  match !undo_list with 
+  | hd::tl -> hd.undo (); redo_list:=hd::!redo_list; undo_list:=tl
+  | [] -> ()  )
+
+let _ = button_redo#connect#clicked ~callback:(fun _ ->
+  match !redo_list with 
+  | hd::tl -> hd.redo (); undo_list:=hd::!undo_list; redo_list:=tl
+  | [] -> ()  )
 
 let calc_selection mouse_x mouse_y =
   selected_circle :=  None;
-  List.iter (function (x,y,r)->
-      let mouse_r = Float.sqrt((x-.mouse_x)**2.+.(y-.mouse_y)**2.) in
-      if mouse_r < r then
-        let d = r-.mouse_r in
-        match !selected_circle with
-        | Some (_,_,_,d') -> if d<d' then selected_circle := Some (x,y,r,d)
-        | None -> selected_circle := Some (x,y,r,d)
-        ) !list_of_circles
+  let min_d = ref None in
+  Hashtbl.iter (fun _ c ->
+      let mouse_r = Float.sqrt((c.x-.mouse_x)**2.+.(c.y-.mouse_y)**2.) in
+      if mouse_r < c.r then
+        let d = c.r-.mouse_r in
+        match !min_d with
+        | Some d' -> if d<d' then 
+            min_d := Some d; selected_circle := Some c
+        | None -> selected_circle := Some c) circles
 
-let _ = drawing#misc#connect#draw ~callback:(draw drawing)
+let change_diameter x y radius =
+  let c = Hashtbl.find circles (x,y) in
+  c.r <- radius;
+  drawing#misc#queue_draw ()
+
+let create_circle x y r =
+  Hashtbl.add circles (x,y) {x;y;r};
+  drawing#misc#queue_draw ()
+  
+let delete_circle x y =
+  Hashtbl.remove circles (x,y);
+  (match !selected_circle with Some c when c.x=x && c.y=y -> selected_circle:=None | _ -> ());
+  drawing#misc#queue_draw ()
+
+let create_diameter_window () =
+  match !selected_circle with
+  | Some c ->
+    let old_r = c.r in
+    let window = GWindow.window ~title:"" ~modal:true ~width:250 ~height:100 () in
+    let vbox = GPack.vbox ~border_width:10 ~packing:window#add () in
+    let label = GMisc.label ~text:(Printf.sprintf "Adjust diameter of circle at (%f, %f)" c.x c.y) ~packing:vbox#add () in
+    let slider_adj = GData.adjustment ~lower:0. ~value:c.r ~upper:200. () in
+    let slider = GRange.scale ~packing:(vbox#pack ~padding:4 ~expand:true) `HORIZONTAL ~adjustment:slider_adj () in
+    let _ = window#connect#destroy ~callback:(fun _ ->
+      undo_list := { undo= (fun () -> change_diameter c.x c.y old_r); 
+                    redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list) in
+    let _ = slider#connect#value_changed ~callback:(fun _ -> change_diameter c.x c.y slider_adj#value;
+    drawing#misc#queue_draw()) in
+    window#show ();
+    ignore (label, slider)
+  | None -> ()
+
 let _ = drawing#event#add [`BUTTON_PRESS]
 let _ = drawing#event#connect#button_press ~callback:(fun ev ->
   let mouse_x = GdkEvent.Button.x ev in
@@ -63,21 +98,28 @@ let _ = drawing#event#connect#button_press ~callback:(fun ev ->
   let button = GdkEvent.Button.button ev in
   if button = 3 then
     match !selected_circle with 
-    | Some (x,y,r,_) when Float.sqrt((x-.mouse_x)**2.+.(y-.mouse_y)**2.) < r
+    | Some c when Float.sqrt((c.x-.mouse_x)**2.+.(c.y-.mouse_y)**2.) < c.r
       ->
         let menu = GMenu.menu () in
         let menuitem = GMenu.menu_item ~label:"Adjust diameter..." ~use_mnemonic:true ~packing:menu#append () in
-        ignore @@ menuitem#connect#activate ~callback:(fun _ -> match !selected_circle with 
-                                                     | Some (x,y,_,_) -> change_diameter x y 50. ; drawing#misc#queue_draw ()
-                                                     | None -> ());
+        ignore @@ menuitem#connect#activate ~callback:(fun _ -> create_diameter_window ());
         menu#popup ~button:0 ~time:0l
     | _ -> ()
   else
-    (calc_selection mouse_x mouse_y;
-    if !selected_circle = None then
-      list_of_circles := (mouse_x,mouse_y,10.):: !list_of_circles;
-    drawing#misc#queue_draw ());
+    begin
+      calc_selection mouse_x mouse_y;
+      if !selected_circle = None then
+      begin
+        create_circle mouse_x mouse_y 20.;
+        undo_list := { undo = (fun () -> delete_circle mouse_x mouse_y);
+                       redo = (fun () -> create_circle mouse_x mouse_y 20.) } :: ! undo_list;
+        redo_list := []    
+      end
+    else
+      drawing#misc#queue_draw()
+    end;
     true)
+          
 let () = ignore (button_undo, button_redo)
 let () =
   ignore @@ w#connect#destroy ~callback: GMain.quit;
