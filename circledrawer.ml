@@ -98,6 +98,7 @@ let create_diameter_window () =
     let _ = window#connect#destroy ~callback:(fun _ ->
       undo_list := { undo= (fun () -> change_diameter c.x c.y old_r); 
                     redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list;
+      redo_list := [];
       check_undo ()) in
     let _ = slider#connect#value_changed ~callback:(fun _ -> change_diameter c.x c.y slider_adj#value;
     drawing#misc#queue_draw()) in
@@ -127,7 +128,7 @@ let _ = drawing#event#connect#button_press ~callback:(fun ev ->
         create_circle mouse_x mouse_y 20.;
         undo_list := { undo = (fun () -> delete_circle mouse_x mouse_y);
                        redo = (fun () -> create_circle mouse_x mouse_y 20.) } :: ! undo_list;
-        (* redo_list := []; *)
+        redo_list := [];
         check_undo ()    
       end
       else
