@@ -19,3 +19,6 @@ dune exec ./timer.exe
 dune exec ./crud.exe
 dune exec ./circledrawer.exe
 ```
+
+LablGtk3 is an object oriented binding to Gtk3. However, some functional
+traits are involved. (Callback)
