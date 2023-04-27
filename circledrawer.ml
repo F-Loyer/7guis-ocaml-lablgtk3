@@ -34,15 +34,27 @@ let draw widget cr =
 
 let _ = drawing#misc#connect#draw ~callback:(draw drawing)
 
+let check_undo () =
+  button_undo#set_sensitive (!undo_list <> []) ;
+  button_redo#set_sensitive (!redo_list <> [])
+
+let () = check_undo ()
+
 let _ = button_undo#connect#clicked ~callback:(fun _ ->
-  match !undo_list with 
-  | hd::tl -> hd.undo (); redo_list:=hd::!redo_list; undo_list:=tl
-  | [] -> ()  )
+  begin
+    match !undo_list with 
+    | hd::tl -> hd.undo (); redo_list:=hd::!redo_list; undo_list:=tl
+    | [] -> ()
+  end;
+  check_undo()  )
 
 let _ = button_redo#connect#clicked ~callback:(fun _ ->
-  match !redo_list with 
-  | hd::tl -> hd.redo (); undo_list:=hd::!undo_list; redo_list:=tl
-  | [] -> ()  )
+  begin
+    match !redo_list with 
+    | hd::tl -> hd.redo (); undo_list:=hd::!undo_list; redo_list:=tl
+    | [] -> ()
+  end;
+  check_undo ()  )
 
 let calc_selection mouse_x mouse_y =
   selected_circle :=  None;
@@ -64,10 +76,14 @@ let change_diameter x y radius =
 let create_circle x y r =
   Hashtbl.add circles (x,y) {x;y;r};
   drawing#misc#queue_draw ()
-  
+
 let delete_circle x y =
   Hashtbl.remove circles (x,y);
-  (match !selected_circle with Some c when c.x=x && c.y=y -> selected_circle:=None | _ -> ());
+  begin
+    match !selected_circle with 
+    | Some c when c.x=x && c.y=y -> selected_circle:=None 
+    | _ -> ()
+  end;
   drawing#misc#queue_draw ()
 
 let create_diameter_window () =
@@ -76,12 +92,13 @@ let create_diameter_window () =
     let old_r = c.r in
     let window = GWindow.window ~title:"" ~modal:true ~width:250 ~height:100 () in
     let vbox = GPack.vbox ~border_width:10 ~packing:window#add () in
-    let label = GMisc.label ~text:(Printf.sprintf "Adjust diameter of circle at (%f, %f)" c.x c.y) ~packing:vbox#add () in
+    let label = GMisc.label ~text:(Printf.sprintf "Adjust diameter of circle at (%.0f, %.0f)" c.x c.y) ~packing:vbox#add () in
     let slider_adj = GData.adjustment ~lower:0. ~value:c.r ~upper:200. () in
     let slider = GRange.scale ~packing:(vbox#pack ~padding:4 ~expand:true) `HORIZONTAL ~adjustment:slider_adj () in
     let _ = window#connect#destroy ~callback:(fun _ ->
       undo_list := { undo= (fun () -> change_diameter c.x c.y old_r); 
-                    redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list) in
+                    redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list;
+      check_undo ()) in
     let _ = slider#connect#value_changed ~callback:(fun _ -> change_diameter c.x c.y slider_adj#value;
     drawing#misc#queue_draw()) in
     window#show ();
@@ -110,10 +127,11 @@ let _ = drawing#event#connect#button_press ~callback:(fun ev ->
         create_circle mouse_x mouse_y 20.;
         undo_list := { undo = (fun () -> delete_circle mouse_x mouse_y);
                        redo = (fun () -> create_circle mouse_x mouse_y 20.) } :: ! undo_list;
-        redo_list := []    
+        (* redo_list := []; *)
+        check_undo ()    
       end
-    else
-      drawing#misc#queue_draw()
+      else
+        drawing#misc#queue_draw()
     end;
     true)
           
