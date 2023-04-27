@@ -5,11 +5,11 @@ This project implements the 6 first tasks of the 7GUIs
 LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
 is used to for dates handling.
 
-The 7th challenge (Cells) won't be developped. Gtk doesn't provide a 
+The 7th task (Cells) won't be developped. Gtk doesn't provide a 
 real table widget. The list\_view is closed to this widget, but doesn't
 permit the selection of a unique cell.
 
-The different challenges are executed with
+The different task are compiled and executed with
 
 ```
 dune exec ./counter.exe
