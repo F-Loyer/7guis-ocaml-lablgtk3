@@ -20,6 +20,7 @@ dune exec ./flightbooker.exe
 dune exec ./timer.exe
 dune exec ./crud.exe
 dune exec ./circledrawer.exe
+dune exec ./cells.exe
 ```
 
 LablGtk3 is an object oriented binding to Gtk3. However, some functional
