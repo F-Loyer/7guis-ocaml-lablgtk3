@@ -7,7 +7,7 @@ let celsius_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack 
 let farenheit_entry = GEdit.entry ~packing:(hbox#pack ~padding:4) ()
 let farenheit_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack ~padding:4) ~text:"Farenheit" ()
 
-let change_allowed = ref true (* when false, this avoid that when changing °F because of a °C change, the °C chnage back*)
+let change_allowed = ref true (* when false, this avoid that when changing °F because of a °C change, then °C changes back*)
 
 let _ = celsius_entry#connect#changed ~callback:(function _ ->
   if !change_allowed then

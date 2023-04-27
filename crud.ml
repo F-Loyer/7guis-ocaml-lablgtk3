@@ -10,12 +10,14 @@ let model_filtered = GTree.model_filter model
 let display name surname =
   name ^ ", " ^ surname
 
+(*
 let () =List.iter (fun (name,surname) ->
   let row = model#append () in
     model#set ~row ~column:name_col name;
     model#set ~row ~column:surname_col surname;
     model#set ~row ~column:display_col (display name surname))
 ["A","A";"BA","BA";"BB","BB"]
+*)
 
 let w = GWindow.window ~border_width:10 ~title:"CRUD" ()
 let table = GPack.table ~row_spacings:4 ~col_spacings:4 ~rows:5 ~columns:4 ~homogeneous:false ~show:true ~packing:w#add ()
