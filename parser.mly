@@ -26,8 +26,6 @@ prog :
 expr :
   | p1 = expr; PLUS; p2 = product { Expr.Add (p1,p2) }
   | p1 = expr; MINUS; p2 = product { Expr.Sub (p1,p2) }
-  | PLUS; p = product { Expr.UnaryPlus p }
-  | MINUS; p = product { Expr.UnaryMinus p }
   | p = product { p }
   
 product :
@@ -36,6 +34,8 @@ product :
   | e = simple_expr { e }
 
 simple_expr :
+  | PLUS; p = simple_expr { Expr.UnaryPlus p }
+  | MINUS; p = simple_expr { Expr.UnaryMinus p }
   | LPAREN; e = expr; RPAREN { e }
   | f = FLOAT  { Expr.Float f }
   | f = FUNCTION; LPAREN; e = separated_list(COMMA,expr); RPAREN  { Expr.Function (String.uppercase_ascii f, e) }
