@@ -65,8 +65,7 @@ let () = for col=0 to 25 do
           Expr.add_formulae (col,row) str Expr.Null
     with
     _ ->
-      Expr.add_formulae (col,row) str (Expr.Invalid "Parse error");
-       model#set ~row:(model#get_iter path) ~column:table_cols.(col) "Invalid")
+      Expr.add_formulae (col,row) str (Expr.Invalid "#Parse error"))
   done
 let () =
   ignore @@ w#connect#destroy ~callback: GMain.quit;

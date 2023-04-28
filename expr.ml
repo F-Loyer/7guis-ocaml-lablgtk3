@@ -90,7 +90,7 @@ let rec eval_expr expr =
          | a' -> compute_error [a';InvalidVal "#invalid argument"] end
   | Multiply (a,b) -> begin match (eval_expr a), (eval_expr b) with
          | FloatVal a', FloatVal b' -> FloatVal (a'*.b')
-         | _,_ -> InvalidVal "#invalid argument" end
+         | a', b' -> compute_error [a';b';InvalidVal "#invalid argument"] end
   | Divide (a,b) -> begin match (eval_expr a), (eval_expr b) with
          | FloatVal a', FloatVal b' ->
             if b' =0. then 
@@ -138,8 +138,9 @@ let rec eval_expr expr =
             ) (FloatVal 0.) arguments
       | _ -> InvalidVal "#Unknown func"
     end
+  | Invalid s -> InvalidVal s
   | _ -> InvalidVal "#??"
-and eval_cell cell =
+    and eval_cell cell =
      match cell.status with
      | OK -> ()
      | Lazy ->
