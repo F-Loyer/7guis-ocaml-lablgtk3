@@ -21,9 +21,9 @@ exception Expression_error of string
 type cell_type = {
     col:int; row:int;
     mutable str:string;
+    mutable expr: t;
     mutable status: cell_status;
     mutable value: value;
-    mutable formulae: t;
     (* List of cell which should be recomputed when this one change *)
     dependant: ((int*int),cell_type) Hashtbl.t
 }
@@ -42,24 +42,24 @@ let range_of_cells cell1 cell2 =
   | Cell(col1,row1), Cell(col2,row2) -> Range ((min col1 col2),(min row1 row2),(max col1 col2),(max row1 row2))
   | _,_ -> Null
 
-let rec iter_dependant_cells expr f =
+let rec iter_dependant_cells f expr =
   let iter_cell (col,row) =
     begin try 
       let cell = Hashtbl.find spreadsheet (col,row) in f cell
       with Not_found -> 
-        let cell = {col;row;status=OK; str=""; value=NullVal; formulae=Null; dependant=Hashtbl.create 10} in
+        let cell = {col;row;str="";expr=Null;status=OK; value=NullVal; dependant=Hashtbl.create 10} in
            Hashtbl.add spreadsheet (col,row) cell;
            f cell
     end
   in match expr with
-  | Add (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
-  | Sub (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
-  | Multiply (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
-  | Divide (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
-  | UnaryMinus a -> iter_dependant_cells a f 
-  | UnaryPlus a -> iter_dependant_cells a f
+  | Add (a,b) -> iter_dependant_cells f a; iter_dependant_cells f b 
+  | Sub (a,b) -> iter_dependant_cells f a; iter_dependant_cells f b 
+  | Multiply (a,b) -> iter_dependant_cells f a; iter_dependant_cells f b 
+  | Divide (a,b) -> iter_dependant_cells f a; iter_dependant_cells f b 
+  | UnaryMinus a -> iter_dependant_cells f a 
+  | UnaryPlus a -> iter_dependant_cells f a
   | Function (_f,arguments) ->
-      List.iter (fun e -> iter_dependant_cells e f) arguments
+      List.iter (fun e -> iter_dependant_cells f e) arguments
   | Cell (col,row) ->
       iter_cell (col,row)
   | Range (col1,row1,col2,row2) ->
@@ -133,7 +133,7 @@ and eval_cell cell =
         cell.status <- Computed; 
         begin
           try 
-            cell.value <- eval_expr cell.formulae
+            cell.value <- eval_expr cell.expr
           with
           | Expression_error s ->
                cell.value <- InvalidVal s
@@ -162,15 +162,15 @@ let add_formulae (col,row) str expr =
   if Hashtbl.mem spreadsheet (col,row) then
     let cell = Hashtbl.find spreadsheet (col,row) in
       invalid_cell_and_dependant cell;
-      iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.remove cell'.dependant (col,row)); (* Unsubsribe *)
+      iter_dependant_cells (fun cell' -> Hashtbl.remove cell'.dependant (col,row)) cell.expr; (* Unsubsribe *)
       cell.str <- str;
-      cell.formulae <- expr;
-      iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell); (* Subscribe *)
+      cell.expr <- expr;
+      iter_dependant_cells (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell) cell.expr; (* Subscribe *)
       recompute_cell_and_dependant cell
   else
-    let cell = { col;row; str;status=Lazy; value=NullVal; formulae=expr; dependant=Hashtbl.create 10} in
+    let cell = { col;row; str;expr;status=Lazy; value=NullVal; dependant=Hashtbl.create 10} in
     Hashtbl.add spreadsheet (col,row) cell;
-    iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell); (* Subscribe *)
+    iter_dependant_cells (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell) cell.expr ; (* Subscribe *)
     recompute_cell_and_dependant cell
 
 let get_formulae (col,row) =
