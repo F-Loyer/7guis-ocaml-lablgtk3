@@ -26,5 +26,5 @@ dune exec ./cells.exe
 LablGtk3 is an object oriented binding to Gtk3. However, some functional
 traits are involved. (Callback)
 
-A circledrawer alternative is proposed which use only functional (immuable) structure (list) instead of
-Hashtbl and make undo/redo easier. This saves a few lines.
+A circledrawer alternative is proposed which use only a functional (immuable) structure (list) instead of
+Hashtbl and makes undo/redo easier. This saves a few lines.
