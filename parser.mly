@@ -24,6 +24,8 @@ expr :
   | LPAREN; e = expr; RPAREN { e }
   | p1 = expr; PLUS; p2 = product { Expr.Add (p1,p2) }
   | p1 = expr; MINUS; p2 = product { Expr.Sub (p1,p2) }
+  | PLUS; p = product { Expr.UnaryPlus p }
+  | MINUS; p = product { Expr.UnaryMinus p }
   | p = product { p }
   
 product :

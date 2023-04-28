@@ -1,11 +1,11 @@
-let _ = GMain.init ()
+let (_locale:string) = GMain.init ()
 
 let w = GWindow.window ~title:"TempConv" ()
 let hbox = GPack.hbox ~border_width:10 ~packing:w#add ()
 let celsius_entry = GEdit.entry ~packing:(hbox#pack ~padding:4) ()
-let celsius_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack ~padding:4) ~text:"Celsius" ()
+let _celsius_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack ~padding:4) ~text:"Celsius" ()
 let farenheit_entry = GEdit.entry ~packing:(hbox#pack ~padding:4) ()
-let farenheit_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack ~padding:4) ~text:"Farenheit" ()
+let _farenheit_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pack ~padding:4) ~text:"Farenheit" ()
 
 let change_allowed = ref true (* when false, this avoid that when changing °F because of a °C change, then °C changes back*)
 
@@ -28,7 +28,6 @@ let _ = farenheit_entry#connect#changed ~callback:(function _ ->
   with _ -> ());
   change_allowed := true)
     
-let () = ignore (celsius_label, farenheit_label)
 let () =
   ignore @@ w#connect#destroy ~callback: GMain.quit;
   w#show ();

@@ -34,10 +34,10 @@ let verif () =
   | _, _, _ -> button#set_sensitive false
 
 let () = verif ()
-let _ = flight1#connect#changed ~callback:(fun _ -> verif())
-let _ = flight2#connect#changed ~callback:(fun _ -> verif())
-let _ = combo#connect#changed ~callback:(fun _ -> verif())
-let _ = button#connect#clicked ~callback:(fun _ -> 
+let _ = flight1#connect#changed ~callback:(fun () -> verif())
+let _ = flight2#connect#changed ~callback:(fun () -> verif())
+let _ = combo#connect#changed ~callback:(fun () -> verif())
+let _ = button#connect#clicked ~callback:(fun () -> 
   let message = match combo#active with
    | 0 -> "You have booked a one-way flight on " ^ flight1#text
    | _ -> "You have booked a return flight on " ^ flight1#text ^ " and " ^ flight2#text

@@ -3,6 +3,8 @@ type t =
   | Sub of t * t
   | Multiply of t * t
   | Divide of t * t 
+  | UnaryPlus of t
+  | UnaryMinus of t
   | Float of float
   | Cell of int * int
   | Range of t * t
@@ -24,7 +26,7 @@ type cell_type = {
     dependant: ((int*int),cell_type) Hashtbl.t
 }
 let spreadsheet = Hashtbl.create 10
-let callback = ref (fun _ _ -> ())
+let callback = ref (fun (_col,_row) _str -> ())
 
 let cell_of_string s = Cell (
   (let col = Char.code(s.[0]) in
@@ -39,11 +41,13 @@ let rec iter_dependant_cells expr f =
   | Sub (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
   | Multiply (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
   | Divide (a,b) -> iter_dependant_cells a f; iter_dependant_cells b f 
+  | UnaryMinus a -> iter_dependant_cells a f 
+  | UnaryPlus a -> iter_dependant_cells a f 
   | Cell (col,row) -> begin
     try 
       let cell = Hashtbl.find spreadsheet (col,row) in f cell
       with Not_found -> 
-        let cell = {col;row;status=Lazy; str=""; value=InvalidVal "new"; formulae=Null; dependant=Hashtbl.create 10} in
+        let cell = {col;row;status=OK; str=""; value=NullVal; formulae=Null; dependant=Hashtbl.create 10} in
            Hashtbl.add spreadsheet (col,row) cell;
            f cell
       end
@@ -57,17 +61,29 @@ let rec eval_expr expr =
   | Sub (a,b) -> begin match (eval_expr a), (eval_expr b) with
          | FloatVal a', FloatVal b' -> FloatVal (a'-.b')
          | _,_ -> InvalidVal "fail" end
+  | UnaryPlus a -> begin match (eval_expr a) with
+         | FloatVal a' -> FloatVal (a')
+         | _ -> InvalidVal "fail" end
+  | UnaryMinus a -> begin match (eval_expr a) with
+         | FloatVal a' -> FloatVal (-.a')
+         | _ -> InvalidVal "fail" end
   | Multiply (a,b) -> begin match (eval_expr a), (eval_expr b) with
          | FloatVal a', FloatVal b' -> FloatVal (a'*.b')
          | _,_ -> InvalidVal "fail" end
   | Divide (a,b) -> begin match (eval_expr a), (eval_expr b) with
-         | FloatVal a', FloatVal b' -> FloatVal (a'/.b')
+         | FloatVal a', FloatVal b' ->
+            if b' =0. then 
+              InvalidVal "divide by 0" 
+            else
+              FloatVal (a'/.b')
          | _,_ -> InvalidVal "fail" end
   | Null -> NullVal
   | Float f -> FloatVal f
   | String s -> StringVal s
   | Cell (c,r) -> 
-    let cell = Hashtbl.find spreadsheet (c,r) in eval_cell cell; cell.value
+    let cell = Hashtbl.find spreadsheet (c,r) in 
+      eval_cell cell;
+      cell.value
   | _ -> InvalidVal "not implemented"
 and eval_cell cell =
      match cell.status with
@@ -95,17 +111,17 @@ let rec recompute_cell_and_dependant cell =
     Hashtbl.iter (fun _ c -> recompute_cell_and_dependant c) cell.dependant
   end
 
-let add_formulae (col,row) str e = 
+let add_formulae (col,row) str expr = 
   if Hashtbl.mem spreadsheet (col,row) then
     let cell = Hashtbl.find spreadsheet (col,row) in
       invalid_cell_and_dependant cell;
       iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.remove cell'.dependant (col,row)); (* Unsubsribe *)
       cell.str <- str;
-      cell.formulae <- e;
+      cell.formulae <- expr;
       iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell); (* Subscribe *)
       recompute_cell_and_dependant cell
   else
-    let cell = { col;row; str;status=Lazy; value=InvalidVal "new"; formulae=e; dependant=Hashtbl.create 10} in
+    let cell = { col;row; str;status=Lazy; value=InvalidVal "new"; formulae=expr; dependant=Hashtbl.create 10} in
     Hashtbl.add spreadsheet (col,row) cell;
     iter_dependant_cells cell.formulae (fun cell' -> Hashtbl.add cell'.dependant (col,row) cell); (* Subscribe *)
     recompute_cell_and_dependant cell

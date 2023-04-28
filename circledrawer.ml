@@ -1,4 +1,4 @@
-let _ = GMain.init ()
+let (_locale:string) = GMain.init ()
 
 type circle = { x:float; y: float; mutable r: float}
 type action = { undo: unit -> unit; redo: unit -> unit}
@@ -20,13 +20,13 @@ let drawing = GMisc.drawing_area ~packing:(table#attach ~left:0 ~right:2~top:1) 
 
 let draw widget cr =
   ignore widget;
-  Option.iter (fun c ->
+  Option.iter (fun circle ->
      Cairo.set_source_rgb cr 0.5 0.5 0.5;
-     Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
+     Cairo.arc cr circle.x circle.y ~r:circle.r ~a1:0. ~a2:(2.*.Float.pi);
      Cairo.fill cr
   ) !selected_circle;
-  Hashtbl.iter (fun _ c ->
-     Cairo.arc cr c.x c.y ~r:c.r ~a1:0. ~a2:(2.*.Float.pi);
+  Hashtbl.iter (fun _coord circle ->
+     Cairo.arc cr circle.x circle.y ~r:circle.r ~a1:0. ~a2:(2.*.Float.pi);
      Cairo.set_source_rgb cr 0. 0. 0.;
      Cairo.stroke cr
   ) circles;
@@ -40,7 +40,7 @@ let check_undo () =
 
 let () = check_undo ()
 
-let _ = button_undo#connect#clicked ~callback:(fun _ ->
+let _ = button_undo#connect#clicked ~callback:(fun () ->
   begin
     match !undo_list with 
     | hd::tl -> hd.undo (); redo_list:=hd::!redo_list; undo_list:=tl
@@ -48,7 +48,7 @@ let _ = button_undo#connect#clicked ~callback:(fun _ ->
   end;
   check_undo()  )
 
-let _ = button_redo#connect#clicked ~callback:(fun _ ->
+let _ = button_redo#connect#clicked ~callback:(fun () ->
   begin
     match !redo_list with 
     | hd::tl -> hd.redo (); undo_list:=hd::!undo_list; redo_list:=tl
@@ -59,14 +59,14 @@ let _ = button_redo#connect#clicked ~callback:(fun _ ->
 let calc_selection mouse_x mouse_y =
   selected_circle :=  None;
   let min_d = ref None in
-  Hashtbl.iter (fun _ c ->
-      let mouse_r = Float.sqrt((c.x-.mouse_x)**2.+.(c.y-.mouse_y)**2.) in
-      if mouse_r < c.r then
-        let d = c.r-.mouse_r in
+  Hashtbl.iter (fun _coord circle ->
+      let mouse_r = Float.sqrt((circle.x-.mouse_x)**2.+.(circle.y-.mouse_y)**2.) in
+      if mouse_r < circle.r then
+        let d = circle.r-.mouse_r in
         match !min_d with
         | Some d' -> if d<d' then 
-            min_d := Some d; selected_circle := Some c
-        | None -> selected_circle := Some c) circles
+            min_d := Some d; selected_circle := Some circle
+        | None -> selected_circle := Some circle) circles
 
 let change_diameter x y radius =
   let c = Hashtbl.find circles (x,y) in
@@ -95,12 +95,12 @@ let create_diameter_window () =
     let label = GMisc.label ~text:(Printf.sprintf "Adjust diameter of circle at (%.0f, %.0f)" c.x c.y) ~packing:vbox#add () in
     let slider_adj = GData.adjustment ~lower:0. ~value:c.r ~upper:200. () in
     let slider = GRange.scale ~packing:(vbox#pack ~padding:4 ~expand:true) `HORIZONTAL ~adjustment:slider_adj () in
-    let _ = window#connect#destroy ~callback:(fun _ ->
+    let _ = window#connect#destroy ~callback:(fun () ->
       undo_list := { undo= (fun () -> change_diameter c.x c.y old_r); 
                     redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list;
       redo_list := [];
       check_undo ()) in
-    let _ = slider#connect#value_changed ~callback:(fun _ -> change_diameter c.x c.y slider_adj#value;
+    let _ = slider#connect#value_changed ~callback:(fun () -> change_diameter c.x c.y slider_adj#value;
     drawing#misc#queue_draw()) in
     window#show ();
     ignore (label, slider)
@@ -117,7 +117,7 @@ let _ = drawing#event#connect#button_press ~callback:(fun ev ->
       ->
         let menu = GMenu.menu () in
         let menuitem = GMenu.menu_item ~label:"Adjust diameter..." ~use_mnemonic:true ~packing:menu#append () in
-        ignore @@ menuitem#connect#activate ~callback:(fun _ -> create_diameter_window ());
+        ignore @@ menuitem#connect#activate ~callback:(fun () -> create_diameter_window ());
         menu#popup ~button:0 ~time:0l
     | _ -> ()
   else
