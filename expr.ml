@@ -113,10 +113,12 @@ let rec eval_expr expr =
                        let accu' = ref accu in
                          for col = col1 to col2 do
                            for row = row1 to row2 do 
-                            let cell = Hashtbl.find spreadsheet (col,row) in 
-                              eval_cell cell;
-                              let b = float_of_value cell.value in
-                                 accu' := !accu' +. b
+                             let cell = Hashtbl.find spreadsheet (col,row) in 
+                               eval_cell cell;
+                               match cell.value with
+                               | InvalidVal s -> raise (Expression_error s)
+                               | cell_value -> let b = float_of_value cell_value in
+                                    accu' := !accu' +. b
                            done
                          done;
                          !accu'
