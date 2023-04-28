@@ -68,7 +68,7 @@ let rec iter_dependant_cells expr f =
         iter_cell (col,row)
       done
     done
-  | _ -> ()
+  | Null | Float _ | Invalid _ | String _ -> ()
 
 let float_of_value value = 
   match value with 
@@ -125,8 +125,8 @@ let rec eval_expr expr =
       | _ -> raise (Expression_error "#Unknown func")
     end
   | Invalid s -> raise (Expression_error s)
-  | _ -> raise (Expression_error "#??")
-    and eval_cell cell =
+  | Range (_,_,_,_) -> raise (Expression_error "#Invalid argument")
+and eval_cell cell =
      match cell.status with
      | OK -> ()
      | Lazy ->
