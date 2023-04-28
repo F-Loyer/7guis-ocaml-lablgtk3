@@ -11,7 +11,7 @@ composed of multiple files. `cells.ml` the main program which supports the
 GUIs aspects, `expr.ml` an abstract spreadsheet. `parser.mly` the parser 
 description (with menhir), `lexer.mll` the lexer description (with ocamllex).
 
-The different task are compiled and executed with
+The different tasks are compiled and executed with:
 
 ```
 dune exec ./counter.exe
@@ -20,6 +20,7 @@ dune exec ./flightbooker.exe
 dune exec ./timer.exe
 dune exec ./crud.exe
 dune exec ./circledrawer.exe
+dune exec ./circledrawer2.exe
 dune exec ./cells.exe
 ```
 
