@@ -96,38 +96,33 @@ let rec eval_expr expr =
   | Null -> NullVal
   | Float f -> FloatVal f
   | String s -> StringVal s
-  | Cell (col,row) -> 
-    let cell = Hashtbl.find spreadsheet (col,row) in 
-    begin
-      eval_cell cell;
-      match cell.value with 
-      | InvalidVal s -> raise (Expression_error s)
-      | cell_value -> cell_value
-    end
+  | Cell (col,row) -> cell_value (col,row)
   | Function (f,arguments) ->
     begin
       match f with
       | "SUM" -> let sum = List.fold_left (fun accu expr ->
                     match expr with
                     | Range (col1,row1,col2,row2) ->
-                       let accu' = ref accu in
-                         for col = col1 to col2 do
-                           for row = row1 to row2 do 
-                             let cell = Hashtbl.find spreadsheet (col,row) in 
-                               eval_cell cell;
-                               match cell.value with
-                               | InvalidVal s -> raise (Expression_error s)
-                               | cell_value -> let b = float_of_value cell_value in
-                                    accu' := !accu' +. b
-                           done
-                         done;
-                         !accu'
+                        let accu' = ref accu in
+                          for col = col1 to col2 do
+                            for row = row1 to row2 do 
+                              let b = float_of_value (cell_value (col,row)) in
+                                accu' := !accu' +. b
+                            done
+                          done;
+                          !accu'
                      | expr -> let b = float_of_value (eval_expr expr) in accu +. b 
             ) 0. arguments in FloatVal sum
       | _ -> raise (Expression_error "#Unknown func")
     end
   | Invalid s -> raise (Expression_error s)
   | Range (_,_,_,_) -> raise (Expression_error "#Invalid argument")
+and cell_value (col,row) =
+  let cell = Hashtbl.find spreadsheet (col,row) in 
+  eval_cell cell;
+  match cell.value with
+  | InvalidVal s -> raise (Expression_error s)
+  | cell_value -> cell_value
 and eval_cell cell =
      match cell.status with
      | OK -> ()

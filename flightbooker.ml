@@ -41,7 +41,7 @@ let _ = button#connect#clicked ~callback:(fun () ->
   let message = match combo#active with
    | 0 -> "You have booked a one-way flight on " ^ flight1#text
    | _ -> "You have booked a return flight on " ^ flight1#text ^ " and " ^ flight2#text
- in let dialog = GWindow.message_dialog
+  in let dialog = GWindow.message_dialog
     ~message_type:`INFO
     ~buttons:GWindow.Buttons.ok
     ~message:message () in 
