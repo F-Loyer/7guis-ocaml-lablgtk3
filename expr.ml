@@ -101,14 +101,14 @@ let rec invalid_cell_and_dependant cell =
   if cell.status <> Lazy then
   begin
     cell.status <- Lazy;
-    Hashtbl.iter (fun _ c -> invalid_cell_and_dependant c) cell.dependant
+    Hashtbl.iter (fun _coord cell' -> invalid_cell_and_dependant cell') cell.dependant
   end
 
 let rec recompute_cell_and_dependant cell =
   if cell.status = Lazy then
   begin
     eval_cell cell;
-    Hashtbl.iter (fun _ c -> recompute_cell_and_dependant c) cell.dependant
+    Hashtbl.iter (fun _coord cell' -> recompute_cell_and_dependant cell') cell.dependant
   end
 
 let add_formulae (col,row) str expr = 
