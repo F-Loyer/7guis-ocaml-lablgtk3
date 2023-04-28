@@ -1,15 +1,15 @@
 # 7GUIS implemented in OCaml / LibGtk3
 
-This project implements the 6 first tasks of the 7GUIs
+This project implements the 7 tasks of the 7GUIs
 (https://eugenkiss.github.io/7guis/tasks) in OCaml with the library
 LablGtk3 (an object oriented Gtk3 binding). The CalendarLib package
 is used to for dates handling.
 
-The 7th task (Cells) is in an early stage. (Float arithmetic, circular
-reference handling). It is composed of multiple files. `cells.ml` the main
-program which supports the GUIs aspects, `expr.ml` an abstract
-spreadsheet. `parser.mly` the parser description (with menhir), `lexer.mll`
-the lexer description (with ocamllex).
+The 7th task (Cells) handles float arithmetics (+, -, *, /) including unary
+operators, and the SUM function. Circular references are detected. It is 
+composed of multiple files. `cells.ml` the main program which supports the
+GUIs aspects, `expr.ml` an abstract spreadsheet. `parser.mly` the parser 
+description (with menhir), `lexer.mll` the lexer description (with ocamllex).
 
 The different task are compiled and executed with
 
