@@ -16,6 +16,7 @@ type t =
 type cell_status = OK | Lazy | Computed
 type value = FloatVal of float | NullVal | InvalidVal of string | StringVal of string
 let string_of_value v = match v with NullVal -> "" | FloatVal v -> string_of_float v | InvalidVal s -> s | StringVal s -> s
+exception Expression_error of string
 
 type cell_type = {
     col:int; row:int;
@@ -69,83 +70,74 @@ let rec iter_dependant_cells expr f =
     done
   | _ -> ()
 
-let compute_error list =
-  List.find (function 
-  | InvalidVal _ -> true
-  | _ -> false) list
-
+let float_of_value value = 
+  match value with 
+  | NullVal -> 0.
+  | FloatVal f -> f
+  | _ -> raise (Expression_error "Invalid argument")
+  
 let rec eval_expr expr =
   match expr with
-  | Add (a,b) -> begin match (eval_expr a), (eval_expr b) with
-         | FloatVal a', FloatVal b' -> FloatVal (a'+.b')
-         | a', b' -> compute_error [a';b';InvalidVal "#invalid argument"] end
-  | Sub (a,b) -> begin match (eval_expr a), (eval_expr b) with
-         | FloatVal a', FloatVal b' -> FloatVal (a'-.b')
-         | a', b' -> compute_error [a';b';InvalidVal "#invalid argument"] end
-  | UnaryPlus a -> begin match (eval_expr a) with
-         | FloatVal a' -> FloatVal (a')
-         | a' -> compute_error [a';InvalidVal "#invalid argument"] end
-  | UnaryMinus a -> begin match (eval_expr a) with
-         | FloatVal a' -> FloatVal (-.a')
-         | a' -> compute_error [a';InvalidVal "#invalid argument"] end
-  | Multiply (a,b) -> begin match (eval_expr a), (eval_expr b) with
-         | FloatVal a', FloatVal b' -> FloatVal (a'*.b')
-         | a', b' -> compute_error [a';b';InvalidVal "#invalid argument"] end
-  | Divide (a,b) -> begin match (eval_expr a), (eval_expr b) with
-         | FloatVal a', FloatVal b' ->
-            if b' =0. then 
-              InvalidVal "#divide by 0"
+  | Add (a,b) -> let a', b' = 
+      (float_of_value (eval_expr a)), (float_of_value (eval_expr b)) in FloatVal (a' +. b')
+  | Sub (a,b) -> let a', b' = 
+      (float_of_value (eval_expr a)), (float_of_value (eval_expr b)) in FloatVal (a' -. b')
+  | UnaryPlus a -> let a' =
+      (float_of_value (eval_expr a)) in FloatVal a'
+  | UnaryMinus a -> let a' =
+      (float_of_value (eval_expr a)) in FloatVal (-. a')
+  | Multiply (a,b) -> let a', b' = 
+      (float_of_value (eval_expr a)), (float_of_value (eval_expr b)) in FloatVal (a' *. b')
+  | Divide (a,b) -> let a', b' = 
+      (float_of_value (eval_expr a)), (float_of_value (eval_expr b)) in
+            if b' =0. then raise (Expression_error "#divide by 0")
             else
               FloatVal (a'/.b')
-         | a', b' -> compute_error [a';b';InvalidVal "#invalid argument"] end
   | Null -> NullVal
   | Float f -> FloatVal f
   | String s -> StringVal s
   | Cell (col,row) -> 
     let cell = Hashtbl.find spreadsheet (col,row) in 
+    begin
       eval_cell cell;
-      cell.value
+      match cell.value with 
+      | InvalidVal s -> raise (Expression_error s)
+      | cell_value -> cell_value
+    end
   | Function (f,arguments) ->
     begin
       match f with
-      | "SUM" -> List.fold_left (fun accu expr ->
-                match accu, expr with
-                | FloatVal _, Range (col1,row1,col2,row2) ->
-                    let accu' = ref accu in
+      | "SUM" -> let sum = List.fold_left (fun accu expr ->
+                    match expr with
+                    | Range (col1,row1,col2,row2) ->
+                       let accu' = ref accu in
                          for col = col1 to col2 do
                            for row = row1 to row2 do 
                             let cell = Hashtbl.find spreadsheet (col,row) in 
                               eval_cell cell;
-                              match !accu', cell.value with 
-                              | FloatVal a, FloatVal b -> accu' := FloatVal (a +. b)
-                              | FloatVal _, NullVal -> ()
-                              | InvalidVal _, _ -> ()
-                              | _, (InvalidVal _ as error) -> accu' := error
-                              | _,_ -> accu' := InvalidVal "#Invalid argument"  
+                              let b = float_of_value cell.value in
+                                 accu' := !accu' +. b
                            done
                          done;
                          !accu'
-                  | FloatVal a, expr -> 
-                    begin
-                            let value = eval_expr expr in
-                            match value with 
-                            | FloatVal b -> FloatVal (a +. b)
-                            | NullVal -> FloatVal a
-                            | _ -> value
-                    end
-                  | InvalidVal _, _ -> accu
-                  | _,_ -> InvalidVal "#Invalid argument"                   
-            ) (FloatVal 0.) arguments
-      | _ -> InvalidVal "#Unknown func"
+                     | expr -> let b = float_of_value (eval_expr expr) in accu +. b 
+            ) 0. arguments in FloatVal sum
+      | _ -> raise (Expression_error "#Unknown func")
     end
-  | Invalid s -> InvalidVal s
-  | _ -> InvalidVal "#??"
+  | Invalid s -> raise (Expression_error s)
+  | _ -> raise (Expression_error "#??")
     and eval_cell cell =
      match cell.status with
      | OK -> ()
      | Lazy ->
         cell.status <- Computed; 
-        cell.value <- eval_expr cell.formulae; 
+        begin
+          try 
+            cell.value <- eval_expr cell.formulae
+          with
+          | Expression_error s ->
+               cell.value <- InvalidVal s
+        end;
         (!callback) (cell.col, cell.row) (string_of_value cell.value);
         cell.status <- OK;
      | Computed ->
