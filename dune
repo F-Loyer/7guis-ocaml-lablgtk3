@@ -3,6 +3,6 @@
 (ocamllex lexer)
 
 (executables
- (names counter temperature flightbooker timer crud circledrawer cells)
+ (names counter temperature flightbooker timer crud circledrawer circledrawer2 cells)
  (libraries lablgtk3 calendar))
 
