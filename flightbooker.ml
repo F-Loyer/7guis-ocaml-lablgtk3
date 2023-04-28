@@ -1,4 +1,4 @@
-let _ = GMain.init ()
+let (_locale:string) = GMain.init ()
 
 let w = GWindow.window ~title:"Book Flight" ()
 let vbox = GPack.vbox ~border_width:10 ~packing:w#add ()

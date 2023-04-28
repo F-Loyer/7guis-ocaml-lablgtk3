@@ -32,7 +32,7 @@ let scrolled_window = GBin.scrolled_window ~width:200 ~height:150 ~packing:(tabl
 let listview = GTree.view ~headers_visible:false ~model:model_filtered ~packing:scrolled_window#add ()
 let colview = GTree.view_column ~renderer:(GTree.cell_renderer_text [`WRAP_WIDTH 150;`WRAP_MODE `WORD_CHAR], ["text",display_col]) ()
 let _indice_colview = listview#append_column colview
-let sel = listview#selection 
+let selection = listview#selection 
 
 let hbox = GPack.hbox ~border_width:10 ~packing:(table#attach~top:4 ~left:0 ~right:4) ()
 let create = GButton.button ~label:("Create") ~packing:(hbox#pack ~padding:4) ()
@@ -41,15 +41,17 @@ let () = update#set_sensitive false
 let delete = GButton.button ~label:("Delete") ~packing:(hbox#pack ~padding:4) ()
 let () = delete#set_sensitive false
 
-let _ = sel#connect#changed ~callback:(fun () ->
-    let ok = sel#get_selected_rows <> [] in
+let _ = selection#connect#changed ~callback:(fun () ->
+    let ok = selection#get_selected_rows <> [] in
       update#set_sensitive ok;
       delete#set_sensitive ok;
-    match sel#get_selected_rows with path::_ ->
-      let row = model_filtered#get_iter path in
-      let row' = model_filtered#convert_iter_to_child_iter row in
-        name_entry#set_text (model#get ~row:row' ~column:name_col);
-        surname_entry#set_text (model#get ~row:row' ~column:surname_col) | _ -> ())
+    match selection#get_selected_rows with
+    | path::_ ->
+        let row = model_filtered#get_iter path in
+        let row' = model_filtered#convert_iter_to_child_iter row in
+          name_entry#set_text (model#get ~row:row' ~column:name_col);
+          surname_entry#set_text (model#get ~row:row' ~column:surname_col)
+     | _ -> ())
         
 let () = model_filtered#set_visible_func (fun model row ->
   let prefix = prefix_entry#text in
@@ -75,13 +77,13 @@ let _ = update#connect#clicked ~callback:(fun () ->
       model#set ~row:row' ~column:name_col name;
       model#set ~row:row' ~column:surname_col surname;
       model#set ~row:row' ~column:display_col (display name surname)
-    ) sel#get_selected_rows)
+    ) selection#get_selected_rows)
    
 let _ = delete#connect#clicked ~callback:(fun () -> 
   List.iter (fun path ->
     let row = model_filtered#get_iter path in
     let row' = model_filtered#convert_iter_to_child_iter row in
-      ignore @@ model#remove row') sel#get_selected_rows)
+      ignore @@ model#remove row') selection#get_selected_rows)
 
 let () =
   ignore @@ w#connect#destroy ~callback: GMain.quit;
