@@ -38,6 +38,6 @@ product :
 simple_expr :
   | LPAREN; e = expr; RPAREN { e }
   | f = FLOAT  { Expr.Float f }
-  | f = FUNCTION; LPAREN; e = separated_list(COMMA,expr); RPAREN  { Expr.Function (f, e) }
+  | f = FUNCTION; LPAREN; e = separated_list(COMMA,expr); RPAREN  { Expr.Function (String.uppercase_ascii f, e) }
   | c1 = CELL; COLON; c2 = CELL { Expr.range_of_cells (Expr.cell_of_string c1) (Expr.cell_of_string c2) }
   | c = CELL { Expr.cell_of_string c } 
