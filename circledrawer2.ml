@@ -13,9 +13,8 @@ let table = GPack.table ~row_spacings:4 ~col_spacings:4 ~rows:2 ~columns:2 ~homo
 
 let button_undo = GButton.button ~label:("Undo") ~packing:(table#attach ~left:0 ~top:0) ()
 let button_redo = GButton.button ~label:("Redo") ~packing:(table#attach ~left:1 ~top:0) ()
-(* GMisc.drawing_area can't be set with a set of dimension. We just make the room for it*)
-let _dummy_label = GMisc.label ~height:200 ~width:200 ~justify:`LEFT ~text:"" ~packing:(table#attach ~left:0 ~right:2 ~top:1 ~expand:`BOTH) ()
 let drawing = GMisc.drawing_area ~packing:(table#attach ~left:0 ~right:2~top:1) ()
+let () = drawing#misc#set_size_request ~width:200 ~height:200 ()
 
 let draw widget cr =
   ignore widget;
