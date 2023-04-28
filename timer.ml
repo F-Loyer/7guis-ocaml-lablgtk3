@@ -6,13 +6,13 @@ let timer = ref None
 let w = GWindow.window ~title:"Timer" ()
 let vbox = GPack.vbox ~border_width:10 ~packing:w#add ()
 let hbox1 = GPack.hbox ~border_width:10 ~packing:vbox#add ()
-let _label_elapsed = GMisc.label ~packing:(hbox1#pack ~padding:4) ~text:"Elapsed time:" ()
+let _label_elapsed = GMisc.label ~text:"Elapsed time:" ~packing:(hbox1#pack ~padding:4) ()
 let progress_bar = GRange.progress_bar ~pulse_step:0.01 ~packing:(hbox1#pack ~padding:4) ()
-let label_elapsed = GMisc.label ~packing:(vbox#pack ~padding:4) ~text:"0.0s" ()
+let label_elapsed = GMisc.label ~text:"0.0s" ~packing:(vbox#pack ~padding:4) ()
 let hbox2 = GPack.hbox ~border_width:10 ~packing:vbox#add ()
-let _label_duration = GMisc.label ~packing:(hbox2#pack ~padding:4) ~text:"Duration:" ()
+let _label_duration = GMisc.label ~text:"Duration:" ~packing:(hbox2#pack ~padding:4) ()
 let slider_adj = GData.adjustment ~lower:0. ~value:60. ~upper:20. ()
-let slider = GRange.scale ~packing:(hbox2#pack ~padding:4 ~expand:true) `HORIZONTAL ~adjustment:slider_adj () 
+let slider = GRange.scale `HORIZONTAL ~adjustment:slider_adj ~packing:(hbox2#pack ~padding:4 ~expand:true) () 
 let button = GButton.button ~label:("Reset") ~packing:(vbox#pack ~padding:4) ()
 
 let update () =

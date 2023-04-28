@@ -94,7 +94,7 @@ let create_diameter_window () =
     let vbox = GPack.vbox ~border_width:10 ~packing:window#add () in
     let label = GMisc.label ~text:(Printf.sprintf "Adjust diameter of circle at (%.0f, %.0f)" c.x c.y) ~packing:vbox#add () in
     let slider_adj = GData.adjustment ~lower:0. ~value:c.r ~upper:200. () in
-    let slider = GRange.scale ~packing:(vbox#pack ~padding:4 ~expand:true) `HORIZONTAL ~adjustment:slider_adj () in
+    let slider = GRange.scale `HORIZONTAL ~adjustment:slider_adj ~packing:(vbox#pack ~padding:4 ~expand:true) () in
     let _ = window#connect#destroy ~callback:(fun () ->
       undo_list := { undo= (fun () -> change_diameter c.x c.y old_r); 
                     redo= (fun () -> change_diameter c.x c.y slider_adj#value)}::!undo_list;

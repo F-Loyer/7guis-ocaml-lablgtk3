@@ -2,7 +2,7 @@ let (_locale:string) = GMain.init ()
 
 let w = GWindow.window ~title:"Book Flight" ()
 let vbox = GPack.vbox ~border_width:10 ~packing:w#add ()
-let (combo, _) = GEdit.combo_box_text ~packing:(vbox#pack ~padding:4) ~strings:[ "one-way flight"; "return flight" ] ~active:0 ()
+let (combo, _) = GEdit.combo_box_text ~strings:[ "one-way flight"; "return flight" ] ~active:0 ~packing:(vbox#pack ~padding:4) ()
 let flight1 = GEdit.entry ~packing:(vbox#pack ~padding:4) ()
 let flight2 = GEdit.entry ~packing:(vbox#pack ~padding:4) ()
 let () = flight2#set_sensitive false
