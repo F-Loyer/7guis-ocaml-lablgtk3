@@ -9,7 +9,7 @@ let _farenheit_label = GMisc.label ~justify:`LEFT ~xalign:0.95 ~packing:(hbox#pa
 
 let change_allowed = ref true (* when false, this avoid that when changing °F because of a °C change, then °C changes back*)
 
-let _ = celsius_entry#connect#changed ~callback:(function _ ->
+let _ = celsius_entry#connect#changed ~callback:(fun () ->
   if !change_allowed then
   (try 
     change_allowed := false;
@@ -18,7 +18,7 @@ let _ = celsius_entry#connect#changed ~callback:(function _ ->
     farenheit_entry#set_text (string_of_float farenheit)
   with _ -> ());
   change_allowed := true)
-let _ = farenheit_entry#connect#changed ~callback:(function _ ->
+let _ = farenheit_entry#connect#changed ~callback:(fun () ->
   if !change_allowed then
   (try 
     change_allowed := false;
