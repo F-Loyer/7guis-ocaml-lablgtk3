@@ -4,6 +4,7 @@
 %token TIMES
 %token DIVIDE
 %token COLON
+%token COMMA
 %token LPAREN
 %token RPAREN
 %token EQUAL
@@ -17,11 +18,12 @@
 
 prog :
   | EQUAL; e = expr; EOF { e }
-  | f = FLOAT  { Expr.Float f }
+  | f = FLOAT; EOF  { Expr.Float f }
+  | PLUS; f = FLOAT; EOF  { Expr.Float f }
+  | MINUS; f = FLOAT; EOF  { Expr.Float (-. f) }
   | EOF { Expr.Null }
 
 expr :
-  | LPAREN; e = expr; RPAREN { e }
   | p1 = expr; PLUS; p2 = product { Expr.Add (p1,p2) }
   | p1 = expr; MINUS; p2 = product { Expr.Sub (p1,p2) }
   | PLUS; p = product { Expr.UnaryPlus p }
@@ -29,12 +31,13 @@ expr :
   | p = product { p }
   
 product :
-  | p1 = product; TIMES; p2 = expr2 { Expr.Multiply (p1,p2) }
-  | p1 = product; DIVIDE; p2 = expr2 { Expr.Divide (p1,p2) }
-  | e = expr2 { e }
+  | p1 = product; TIMES; p2 = simple_expr { Expr.Multiply (p1,p2) }
+  | p1 = product; DIVIDE; p2 = simple_expr { Expr.Divide (p1,p2) }
+  | e = simple_expr { e }
 
-expr2 :
+simple_expr :
+  | LPAREN; e = expr; RPAREN { e }
   | f = FLOAT  { Expr.Float f }
-  | f = FUNCTION; LPAREN; e = expr; RPAREN  { Expr.Function (f, e) }
-  | c1 = CELL; COLON; c2 = CELL { Expr.Range(Expr.cell_of_string c1,Expr.cell_of_string c2) }
+  | f = FUNCTION; LPAREN; e = separated_list(COMMA,expr); RPAREN  { Expr.Function (f, e) }
+  | c1 = CELL; COLON; c2 = CELL { Expr.range_of_cells (Expr.cell_of_string c1) (Expr.cell_of_string c2) }
   | c = CELL { Expr.cell_of_string c } 
