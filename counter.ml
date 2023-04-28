@@ -1,4 +1,4 @@
-let _ = GMain.init ()
+let (_locale:string) = GMain.init ()
 
 let counter = ref 0
 

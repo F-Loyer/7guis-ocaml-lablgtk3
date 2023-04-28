@@ -45,7 +45,7 @@ let _ = button#connect#clicked ~callback:(fun () ->
     ~message_type:`INFO
     ~buttons:GWindow.Buttons.ok
     ~message:message () in 
-    let _ = dialog#run () in
+    let _answer = dialog#run () in
       dialog#destroy ())
 
 let () =
