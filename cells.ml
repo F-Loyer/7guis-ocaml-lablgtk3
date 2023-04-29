@@ -61,8 +61,8 @@ let () = for col=0 to 25 do
           Expr.add_formulae (col,row) str expr
         else
           Expr.add_formulae (col,row) str (Expr.String str)
-        else
-          Expr.add_formulae (col,row) str Expr.Null
+      else
+        Expr.add_formulae (col,row) str Expr.Null
     with
     _ ->
       Expr.add_formulae (col,row) str (Expr.Invalid "#Parse error"))
