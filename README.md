@@ -11,7 +11,7 @@ composed of multiple files. `cells.ml` the main program which supports the
 GUIs aspects, `expr.ml` an abstract spreadsheet. `parser.mly` the parser 
 description (with menhir), `lexer.mll` the lexer description (with ocamllex).
 
-`opam install lablgtk3 calendar mehnir` is required to compile the programs. 
+`opam install lablgtk3 calendar menhir` is required to compile the programs. 
 
 The different tasks are compiled and executed with:
 
